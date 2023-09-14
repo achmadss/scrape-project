@@ -1,0 +1,50 @@
+version: '3.8'
+
+services:
+  # DEV
+  api:
+    build:
+      context: .
+    container_name: api
+    ports:
+      - "8000:8000"
+    networks:
+      - scrape
+    depends_on:
+      - db
+
+  db:
+    image: postgres:14.9-alpine3.18
+    container_name: db
+    environment:
+      POSTGRES_DB: mangatopia
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: password
+    ports:
+      - "5433:5432"
+    networks:
+      - scrape
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+
+  # PGADMIN
+  pgadmin-mangatopia:
+    image: dpage/pgadmin4
+    container_name: pgadmin-mangatopia
+    environment:
+      PGADMIN_DEFAULT_EMAIL: admin@gmail.com
+      PGADMIN_DEFAULT_PASSWORD: password
+    volumes:
+      - pgadmin:/root/.pgadmin
+    ports:
+      - "8082:80"
+    networks:
+      - scrape
+
+volumes:
+  postgres_data:
+  postgres_data_prod:
+  pgadmin:
+
+networks:
+  scrape:
