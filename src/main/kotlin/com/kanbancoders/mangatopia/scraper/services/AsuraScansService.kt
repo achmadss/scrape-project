@@ -86,7 +86,7 @@ class AsuraScansService @Autowired constructor(
                 page.navigate(it, domContentLoaded)
                 page.querySelectorAll("#readerarea p img").map { it.getAttribute("src") }
             }
-            val chapters = images.map { Chapter(imageUrls = it) }
+            val chapters = images.map { Chapter(imageUrls = it.toMutableList()) }
             Manga(
                 title = title,
                 bannerUrl = banner,

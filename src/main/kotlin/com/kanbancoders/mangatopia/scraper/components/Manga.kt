@@ -4,6 +4,8 @@ import jakarta.persistence.Column
 import jakarta.persistence.ElementCollection
 import jakarta.persistence.Entity
 import jakarta.persistence.EntityListeners
+import jakarta.persistence.GeneratedValue
+import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Lob
 import jakarta.persistence.Table
@@ -13,12 +15,13 @@ import jakarta.persistence.Table
 @EntityListeners(MangaEntityListener::class)
 data class Manga(
     @Id
-    @Column(unique = true)
-    @Lob
+    @GeneratedValue(strategy = GenerationType.UUID)
+    val id: String? = null,
+    @Column(columnDefinition = "LONGTEXT")
     val title: String = "",
-    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     val bannerUrl: String = "",
-    @Lob
+    @Column(columnDefinition = "LONGTEXT")
     val synopsis: String = "",
     val status: String = "",
     val type: String = "",
