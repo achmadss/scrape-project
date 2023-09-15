@@ -1,5 +1,6 @@
 package com.kanbancoders.mangatopia.scraper.components
 
+import jakarta.persistence.CollectionTable
 import jakarta.persistence.Column
 import jakarta.persistence.ElementCollection
 import jakarta.persistence.Entity
@@ -7,7 +8,7 @@ import jakarta.persistence.EntityListeners
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
-import jakarta.persistence.Lob
+import jakarta.persistence.JoinColumn
 import jakarta.persistence.Table
 
 @Entity
@@ -29,5 +30,6 @@ data class Manga(
     val artist: String = "",
     val genres: MutableList<String> = mutableListOf(),
     @ElementCollection
+    @CollectionTable(name = "manga_chapters", joinColumns = [JoinColumn(name = "manga_id")])
     val chapters: MutableList<Chapter> = mutableListOf()
 )
