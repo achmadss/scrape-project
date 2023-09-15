@@ -7,8 +7,6 @@ import jakarta.persistence.Id
 
 @Embeddable
 data class Chapter(
-    @Id
-    @GeneratedValue(strategy = GenerationType.UUID)
     val id: String? = null,
     val title: String = "",
     val timestamp: String = "",

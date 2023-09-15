@@ -30,6 +30,6 @@ data class Manga(
     val artist: String = "",
     val genres: MutableList<String> = mutableListOf(),
     @ElementCollection
-    @CollectionTable(name = "manga_chapters", joinColumns = [JoinColumn(name = "manga_id")])
+    @CollectionTable
     val chapters: MutableList<Chapter> = mutableListOf()
 )
