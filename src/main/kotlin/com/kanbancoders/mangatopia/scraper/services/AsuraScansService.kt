@@ -81,12 +81,18 @@ class AsuraScansService @Autowired constructor(
             val metadata = page.querySelectorAll(".infox .fmed")
             val author = metadata[1].querySelector("span").innerText()
             val artist = metadata[2].querySelector("span").innerText()
-            val chapterLinks = page.querySelectorAll("#chapterlist a").map { it.getAttribute("href") }
-            val images = chapterLinks.map {
-                page.navigate(it, domContentLoaded)
-                page.querySelectorAll("#readerarea p img").map { it.getAttribute("src") }
+            val chapters = page.querySelectorAll("#chapterlist a").map {
+                val chapterTitle = it.querySelector(".chapternum").innerText()
+                val timestamp = it.querySelector(".chapterdate").innerText()
+                val chapterLink = it.getAttribute("href")
+                page.navigate(chapterLink, domContentLoaded)
+                val images = page.querySelectorAll("#readerarea p img").map { it.getAttribute("src") }
+                Chapter(
+                    title = chapterTitle,
+                    timestamp = timestamp,
+                    imageUrls = images.toMutableList()
+                )
             }
-            val chapters = images.map { Chapter(imageUrls = it.toMutableList()) }
             Manga(
                 title = title,
                 bannerUrl = banner,
