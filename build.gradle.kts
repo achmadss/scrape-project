@@ -40,6 +40,8 @@ dependencies {
 	implementation("me.tongfei:progressbar:0.10.0")
 	// postgres
 	implementation("org.postgresql:postgresql:42.6.0")
+	// redis
+	implementation("org.springframework.boot:spring-boot-starter-data-redis")
 }
 
 tasks.withType<KotlinCompile> {

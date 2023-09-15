@@ -3,6 +3,7 @@ package com.kanbancoders.mangatopia.scraper.controllers
 import com.kanbancoders.mangatopia.scraper.common.BaseResponse
 import com.kanbancoders.mangatopia.scraper.components.Manga
 import com.kanbancoders.mangatopia.scraper.services.AsuraScansService
+import com.kanbancoders.mangatopia.scraper.workers.PlaywrightWorker
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.web.bind.annotation.CrossOrigin
@@ -20,14 +21,25 @@ class AsuraScansController @Autowired constructor(
 ) {
 
     @GetMapping(
-        path = ["/scrape"]
+        path = ["/scrape-start"]
     )
-    fun startScrape(): ResponseEntity<Any> {
-        asuraScansService.scrape()
-        return ResponseEntity.ok("OK")
+    fun startScrape(): ResponseEntity<BaseResponse<String>> {
+        return BaseResponse.ok(asuraScansService.scrape())
+    }
+
+    @GetMapping(
+        path = ["/scrape-stop"]
+    )
+    fun stopScrape(): ResponseEntity<BaseResponse<String>> {
+        val isStopped = PlaywrightWorker.stopAllWorkers()
+        return if (isStopped) {
+            BaseResponse.ok("All workers gracefully stopped")
+        } else BaseResponse.internalServerError("Not all workers are stopped")
     }
 
     @GetMapping
     fun getAllMangas(): ResponseEntity<BaseResponse<List<Manga>>> = asuraScansService.getAll()
+
+
 
 }
