@@ -17,11 +17,11 @@ data class Manga(
     @Id
     @GeneratedValue(strategy = GenerationType.UUID)
     val id: String? = null,
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "text")
     val title: String = "",
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "text")
     val bannerUrl: String = "",
-    @Column(columnDefinition = "LONGTEXT")
+    @Column(columnDefinition = "text")
     val synopsis: String = "",
     val status: String = "",
     val type: String = "",
