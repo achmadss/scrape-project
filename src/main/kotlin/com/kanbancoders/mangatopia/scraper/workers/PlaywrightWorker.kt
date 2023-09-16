@@ -1,16 +1,18 @@
 package com.kanbancoders.mangatopia.scraper.workers
 
-import com.kanbancoders.mangatopia.scraper.components.Chapter
-import com.kanbancoders.mangatopia.scraper.components.Manga
+import com.kanbancoders.mangatopia.scraper.common.ScrapeStrategy
+import com.kanbancoders.mangatopia.scraper.common.error.GeneralException
 import com.kanbancoders.mangatopia.scraper.components.MangaRepository
 import com.microsoft.playwright.BrowserType
-import com.microsoft.playwright.Page
 import com.microsoft.playwright.Playwright
-import com.microsoft.playwright.options.WaitUntilState
+import kotlinx.coroutines.runBlocking
+import org.springframework.http.HttpStatus
 
 class PlaywrightWorker(
-    private val links: List<String>,
+    val id: String,
     private val mangaRepository: MangaRepository,
+    private val strategy: ScrapeStrategy,
+    private val numberOfWorkers: Int,
 ) : Thread() {
 
     companion object {
@@ -43,90 +45,49 @@ class PlaywrightWorker(
         }
     }
 
-    private val domContentLoaded = Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED)
-
-    private fun fetchMangaDetails(page: Page, link: String): Manga? {
-        return try {
-            page.navigate(link, domContentLoaded.setTimeout(0.0))
-            val elements = page.querySelectorAll(".thumbook img, .thumbook .imptdt i, .thumbook .imptdt a, .entry-title")
-            val bannerUrl = elements[0].getAttribute("src")
-            val status = elements[1].innerText()
-            val type = elements[2].innerText()
-            val title = elements[3].innerText()
-            val synopsis =  page.querySelectorAll(".entry-content p").joinToString("") { it.innerText() }
-            val genres = page.querySelectorAll(".mgen a").map { it.innerText() }.toMutableList()
-            val metadata = page.querySelectorAll(".infox .fmed")
-            val author = metadata[1].querySelector("span").innerText()
-            val artist = metadata[2].querySelector("span").innerText()
-            val chapters = page.querySelectorAll("#chapterlist a").map {
-                page.navigate(it.getAttribute("href"), domContentLoaded)
-                Chapter(
-                    title = it.querySelector(".chapternum").innerText(),
-                    timestamp = it.querySelector(".chapterdate").innerText(),
-                    imageUrls = page.querySelectorAll("#readerarea p img").map {
-                        it.getAttribute("src")
-                    }.toMutableList()
-                )
-            }.toMutableList()
-            Manga(null, title, bannerUrl, synopsis, status, type, author, artist, genres, chapters)
-        } catch (e: Exception) {
-            e.printStackTrace()
-            null
-        }
-    }
-
     override fun run() {
         // Early exit if a stop signal has been sent
-        if (shouldStop) {
+        if (shouldStop || strategy.shouldStop()) {
             println("Stopping worker due to external stop signal.")
             return
         }
 
-        val options = Playwright.CreateOptions()
-        val playwright = Playwright.create(options)
-        val launchOptions = BrowserType.LaunchOptions().apply {
-            headless = true
-            args = listOf("--mute-audio")
-        }
-
-        val browser = playwright.chromium().launch(launchOptions)
-        val page = browser.newPage()
-
         try {
-            for ((index, link) in links.withIndex()) {
-                if (shouldStop) {
-                    println("Stopping worker due to external stop signal.")
-                    break
-                }
-
-                val manga = fetchMangaDetails(page, link) ?: continue
-                println("${index + 1}. ${manga.title}")
-
-                // Upsert logic
-                val existingMangaOptional = mangaRepository.findByTitleIgnoreCase(manga.title)
-                if (existingMangaOptional.isPresent) {
-                    val existingManga = existingMangaOptional.get()
-                    mangaRepository.save(existingManga.copy(
-                        title = manga.title,
-                        bannerUrl = manga.bannerUrl,
-                        synopsis = manga.synopsis,
-                        status = manga.status,
-                        type = manga.type,
-                        author = manga.author,
-                        artist = manga.artist,
-                        genres = manga.genres,
-                        chapters = manga.chapters
-                    ))
-                } else {
-                    mangaRepository.save(manga)
+            val options = Playwright.CreateOptions()
+            val playwright = Playwright.create(options)
+            val launchOptions = BrowserType.LaunchOptions().apply {
+                headless = true
+                args = listOf("--mute-audio")
+            }
+            val browsers = List(numberOfWorkers) { playwright.chromium().launch(launchOptions) }
+            runBlocking {
+                val mangas = strategy.scrape(browsers)
+                mangas.forEach {
+                    if (it != null)  {
+                        val existingMangaOptional = mangaRepository.findByTitleIgnoreCase(it.title)
+                        if (existingMangaOptional.isPresent) {
+                            val existingManga = existingMangaOptional.get()
+                            mangaRepository.save(existingManga.copy(
+                                title = it.title,
+                                bannerUrl = it.bannerUrl,
+                                synopsis = it.synopsis,
+                                status = it.status,
+                                type = it.type,
+                                author = it.author,
+                                artist = it.artist,
+                                genres = it.genres,
+                                chapters = it.chapters
+                            ))
+                        } else {
+                            mangaRepository.save(it)
+                        }
+                    }
                 }
             }
+        } catch (e: Exception) {
+            e.printStackTrace()
+            throw GeneralException(HttpStatus.INTERNAL_SERVER_ERROR, e.message)
         } finally {
-            // Cleanup
-            page.close()
-            browser.close()
-            playwright.close()
-
             // Remove this worker from the active list
             synchronized(PlaywrightWorker::class.java) {
                 activeWorkers.remove(this)

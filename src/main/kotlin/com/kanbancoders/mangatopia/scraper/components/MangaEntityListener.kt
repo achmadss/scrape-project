@@ -6,7 +6,7 @@ class MangaEntityListener {
 
     @PostPersist
     fun logPersistResult(manga: Manga) {
-        println("$manga\n")
+        println("\n$manga\n")
     }
 
 }
