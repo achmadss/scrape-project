@@ -104,7 +104,10 @@ class AsuraScansStrategy(
             var chapters = mutableListOf<Chapter>()
             chapterLinks.forEach {
                 val mangaTitle = it.querySelector(".chapternum").innerText()
-                if (existingChaptersTitles.contains(mangaTitle)) return@forEach
+                if (existingChaptersTitles.contains(mangaTitle)) {
+                    println("$mangaTitle already exist")
+                    return@forEach
+                }
                 val timestamp = it.querySelector(".chapterdate").innerText()
                 val formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
                 val date = LocalDate.parse(timestamp, formatter)
