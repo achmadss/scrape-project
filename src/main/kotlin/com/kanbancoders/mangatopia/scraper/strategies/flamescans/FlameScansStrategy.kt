@@ -16,6 +16,12 @@ class FlameScansStrategy(
         browser: Browser,
         simpMessagingTemplate: SimpMessagingTemplate
     ): Flow<Manga?> = flow {
-        TODO("Not yet implemented")
+        try {
+            val page = browser.newPage()
+            page.navigate("${baseUrl}/series/?status=&type=&order=update", domContentLoaded)
+        } catch (e: Exception) {
+            e.printStackTrace()
+        }
+
     }
 }
