@@ -5,10 +5,14 @@ import jakarta.persistence.Column
 import jakarta.persistence.ElementCollection
 import jakarta.persistence.Entity
 import jakarta.persistence.EntityListeners
+import jakarta.persistence.FetchType
 import jakarta.persistence.GeneratedValue
 import jakarta.persistence.GenerationType
 import jakarta.persistence.Id
 import jakarta.persistence.Table
+import java.time.LocalDateTime
+import org.hibernate.annotations.CreationTimestamp
+import org.hibernate.annotations.UpdateTimestamp
 
 @Entity
 @Table
@@ -28,7 +32,12 @@ data class Manga(
     val author: String = "",
     val artist: String = "",
     val genres: MutableList<String> = mutableListOf(),
-    @ElementCollection
-    @CollectionTable
-    val chapters: MutableList<Chapter> = mutableListOf()
+    @ElementCollection(fetch = FetchType.EAGER)
+    val chapters: MutableList<Chapter> = mutableListOf(),
+    @Column(columnDefinition = "text")
+    val link: String? = null,
+    @CreationTimestamp
+    val createdAt: LocalDateTime = LocalDateTime.now(),
+    @UpdateTimestamp
+    var updatedAt: LocalDateTime = LocalDateTime.now(),
 )

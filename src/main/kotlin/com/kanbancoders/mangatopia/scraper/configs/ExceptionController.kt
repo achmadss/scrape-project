@@ -24,22 +24,6 @@ class ExceptionController: ResponseEntityExceptionHandler() {
 
     val errorLogger: Logger = LoggerFactory.getLogger(ExceptionController::class.java)
 
-    @ExceptionHandler(Exception::class)
-    fun handleException(
-        e: Exception,
-        request: HttpServletRequest,
-    ): ResponseEntity<BaseResponse<Nothing?>> {
-        errorLogger.error("\nException occurred at ${request.method} ${request.requestURI}: \n${e.message}\n")
-        val statusCode = HttpStatus.INTERNAL_SERVER_ERROR
-        val errorMessage = e.message ?: statusCode.reasonPhrase
-        val errorResponse = BaseResponse(
-            statusCode = statusCode.value(),
-            data = null,
-            message = errorMessage,
-        )
-        return ResponseEntity.status(statusCode).body(errorResponse)
-    }
-
     @ExceptionHandler(GeneralException::class)
     fun handleAPIException(
         e: GeneralException,
@@ -54,5 +38,21 @@ class ExceptionController: ResponseEntityExceptionHandler() {
         )
         return ResponseEntity.status(e.httpStatus).body(errorResponse)
     }
+
+//    @ExceptionHandler(Exception::class)
+//    fun handleException(
+//        e: Exception,
+//        request: HttpServletRequest,
+//    ): ResponseEntity<BaseResponse<Nothing?>> {
+//        errorLogger.error("\nException occurred at ${request.method} ${request.requestURI}: \n${e.message}\n")
+//        val statusCode = HttpStatus.INTERNAL_SERVER_ERROR
+//        val errorMessage = e.message ?: statusCode.reasonPhrase
+//        val errorResponse = BaseResponse(
+//            statusCode = statusCode.value(),
+//            data = null,
+//            message = errorMessage,
+//        )
+//        return ResponseEntity.status(statusCode).body(errorResponse)
+//    }
 
 }

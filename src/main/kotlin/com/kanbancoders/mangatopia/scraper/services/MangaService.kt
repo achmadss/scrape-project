@@ -6,6 +6,7 @@ import com.kanbancoders.mangatopia.scraper.components.MangaRepository
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.http.ResponseEntity
 import org.springframework.stereotype.Service
+import org.springframework.transaction.annotation.Transactional
 
 @Service
 class MangaService @Autowired constructor(
@@ -14,6 +15,13 @@ class MangaService @Autowired constructor(
 
     fun getAll(): ResponseEntity<BaseResponse<List<Manga>>> {
         return BaseResponse.ok(mangaRepository.findAll().toList())
+    }
+
+    @Transactional
+    fun deleteAll(): ResponseEntity<BaseResponse<List<Manga>>> {
+        val deletedList = mangaRepository.findAll().toList()
+        mangaRepository.deleteAll()
+        return BaseResponse.ok(deletedList)
     }
 
 }

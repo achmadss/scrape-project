@@ -7,5 +7,6 @@ import org.springframework.data.repository.PagingAndSortingRepository
 interface MangaRepository: PagingAndSortingRepository<Manga, String>, CrudRepository<Manga, String> {
 
     fun findByTitleIgnoreCase(title: String): Optional<Manga>
+    fun findTopByOrderByUpdatedAtDesc(): Optional<Manga>
 
 }
