@@ -67,8 +67,8 @@ class AsuraScansStrategy(
 
 
     private fun scrapeManga(browser: Browser, link: String): Manga? {
+        val page = browser.newPage()
         return try {
-            val page = browser.newPage()
             page.navigate(link, domContentLoaded)
             val elements = page.querySelectorAll(".thumbook img, .thumbook .imptdt i, .thumbook .imptdt a, .entry-title")
             val bannerUrl = elements[0].getAttribute("src")
@@ -106,8 +106,15 @@ class AsuraScansStrategy(
                 println(it)
             }
             page.close()
-            Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, chapters, link)
+            var source = mutableListOf<String>()
+            if (id == null) source.add("AsuraScans")
+            else {
+                source = existingManga.get().sources
+                if (source.contains("AsuraScans").not()) source.add("AsuraScans")
+            }
+            Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, source, chapters, link)
         } catch (e: Exception) {
+            page.close()
             null
         }
     }

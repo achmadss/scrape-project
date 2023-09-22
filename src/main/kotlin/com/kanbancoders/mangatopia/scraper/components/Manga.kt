@@ -32,6 +32,7 @@ data class Manga(
     val author: String = "",
     val artist: String = "",
     val genres: MutableList<String> = mutableListOf(),
+    val sources: MutableList<String> = mutableListOf(),
     @ElementCollection(fetch = FetchType.EAGER)
     val chapters: MutableList<Chapter> = mutableListOf(),
     @Column(columnDefinition = "text")

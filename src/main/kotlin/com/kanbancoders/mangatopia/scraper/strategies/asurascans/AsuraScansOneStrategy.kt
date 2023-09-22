@@ -55,8 +55,14 @@ class AsuraScansOneStrategy(
                 }
                 it.imageUrls.addAll(imageUrls)
             }
+            var source = mutableListOf<String>()
+            if (id == null) source.add("AsuraScans")
+            else {
+                source = existingManga.get().sources
+                if (source.contains("AsuraScans").not()) source.add("AsuraScans")
+            }
             emit(
-                Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, chapters, link)
+                Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, source, chapters, link)
             )
         }
     }
