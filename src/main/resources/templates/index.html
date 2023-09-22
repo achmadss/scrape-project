@@ -16,7 +16,7 @@
     const outputDiv = document.getElementById("output");
 
     // Establish the WebSocket connection
-    const socket = new SockJS('http://localhost:8000/ws'); // Replace with your server's URL
+    const socket = new SockJS('https://scraper.kanbancoders.com/ws'); // Replace with your server's URL
     const stompClient = Stomp.over(socket);
 
     stompClient.connect({}, function(frame) {
