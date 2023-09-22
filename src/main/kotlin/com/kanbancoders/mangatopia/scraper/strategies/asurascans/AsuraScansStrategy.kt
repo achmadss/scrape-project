@@ -91,6 +91,7 @@ class AsuraScansStrategy(
             val existingManga = mangaRepository.findByTitleIgnoreCase(title)
             var id: String? = null
             val existingChaptersTitles = if (existingManga.isPresent) {
+                println("chapters exist: ${existingManga.get().chapters.map { it.title }}")
                 existingManga.get().chapters.map { it.title }.toSet()
             } else emptySet()
             if (existingManga.isPresent) id = existingManga.get().id

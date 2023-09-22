@@ -44,7 +44,7 @@
                 } else if (message.includes("[CHAPTER : DONE]")) {
                     chapterDoneDiv.textContent = "[CHAPTER:DONE]: " + message.replace("[CHAPTER : DONE]: ", "");
                 } else if (message.includes("[MANGA : ERROR]")) {
-                    mangasErrorDiv.innerHTML += += "<li>" + message.replace("[MANGA : ERROR]: ", "") + "</li>";
+                    mangasErrorDiv.innerHTML += "<li>" + message.replace("[MANGA : ERROR]: ", "") + "</li>";
                 } else if (message.includes("STATUS")) {
                     statusDiv.textContent = "Status: " + message.split(":")[1]
                 }
