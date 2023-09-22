@@ -41,7 +41,10 @@ class PlaywrightWorker(
                     )
                 }
             }}
-            catch (e: Exception) { e.printStackTrace() }
+            catch (e: Exception) {
+                e.printStackTrace()
+                simpMessagingTemplate.convertAndSend("/topic/progress", "STATUS:ERROR")
+            }
             finally { stop() }
         }
     }
@@ -50,6 +53,7 @@ class PlaywrightWorker(
         try {
             browser.close()
             playwright.close()
+            simpMessagingTemplate.convertAndSend("/topic/progress", "STATUS:DONE")
         } catch (e: Exception) { e.printStackTrace() } finally {
             job?.cancel()
             onJobComplete(strategyName)

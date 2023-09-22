@@ -2,6 +2,7 @@ package com.kanbancoders.mangatopia.scraper.controllers
 
 import org.springframework.stereotype.Controller
 import org.springframework.web.bind.annotation.GetMapping
+import org.springframework.ui.Model
 
 @Controller
 class ProgressController {
@@ -9,6 +10,8 @@ class ProgressController {
     @GetMapping(
         path = ["progress"]
     )
-    fun tryWebsocket(): String = "index"
+    fun tryWebsocket(model: Model): String {
+        return "index"
+    }
 
 }

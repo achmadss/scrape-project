@@ -22,6 +22,7 @@ class AsuraScansStrategy(
         browser: Browser,
         simpMessagingTemplate: SimpMessagingTemplate,
     ): Flow<Manga?> = flow {
+        simpMessagingTemplate.convertAndSend("/topic/progress", "STATUS:ONGOING")
         val page = browser.newPage()
         val lastUpdated = mangaRepository.findTopByOrderByUpdatedAtDesc()
             .map { it.title }
@@ -99,26 +100,28 @@ class AsuraScansStrategy(
             val author = metadata[1].querySelector("span").innerText()
             val artist = metadata[2].querySelector("span").innerText()
             val chapterLinks = page.querySelectorAll("#chapterlist a")
-            val chapters = chapterLinks.mapNotNull {
+            var chapters = mutableListOf<Chapter>()
+            chapterLinks.forEach {
                 val mangaTitle = it.querySelector(".chapternum").innerText()
-                if (existingChaptersTitles.contains(mangaTitle)) return@mapNotNull null
+                if (existingChaptersTitles.contains(mangaTitle)) return@forEach
                 val timestamp = it.querySelector(".chapterdate").innerText()
                 val formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
                 val date = LocalDate.parse(timestamp, formatter)
-                Chapter(
+                chapters.add(Chapter(
                     title = mangaTitle,
                     timestamp = date.atStartOfDay(),
                     chapterUrl = it.getAttribute("href")
-                )
-            }.reversed().toMutableList()
-            chapters.mapIndexed { index, it ->
+                ))
+            }
+            chapters = chapters.reversed().toMutableList()
+            chapters.map {
                 page.navigate(it.chapterUrl, domContentLoaded)
                 val imageUrls = page.querySelectorAll("#readerarea p img").map {
                     it.getAttribute("src")
                 }
                 it.imageUrls.addAll(imageUrls)
                 println(it)
-                simpMessagingTemplate.convertAndSend("/topic/progress","[CHAPTER : DONE]: ${it.title}}")
+                simpMessagingTemplate.convertAndSend("/topic/progress","[CHAPTER : DONE]: ${it.title}")
             }
             var source = mutableListOf<String>()
             if (id == null) source.add("AsuraScans")

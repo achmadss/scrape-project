@@ -10,17 +10,21 @@
 </head>
 
 <body>
-<div id="mangaWorking">Manga Being Worked On: None</div>
-<div id="chapterDone">Chapter Done: None</div>
-<div id="mangasDone">Mangas Done:</div>
+    <div id="status">Status:</div>
+    <div id="mangaWorking">[MANGA:WORKING]: None</div>
+    <div id="chapterDone">[CHAPTER:DONE]: None</div>
+    <div id="mangasDone">[MANGA:DONE]:</div>
+    <div id="mangasError">[MANGA:ERROR]:</div>
 </body>
 
 </html>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
+        const statusDiv = document.getElementById("status");
         const mangaWorkingDiv = document.getElementById("mangaWorking");
         const chapterDoneDiv = document.getElementById("chapterDone");
         const mangasDoneDiv = document.getElementById("mangasDone");
+        const mangasErrorDiv = document.getElementById("mangasError");
 
         // Establish the WebSocket connection
         const socket = new SockJS('https://scraper.kanbancoders.com/ws'); // Replace with your server's URL
@@ -34,11 +38,15 @@
                 let message = progressMessage.body;
 
                 if (message.includes("[MANGA : WORKING]")) {
-                    mangaWorkingDiv.textContent = "Manga Being Worked On: " + message.replace("[MANGA : WORKING]: ", "");
+                    mangaWorkingDiv.textContent = "[MANGA:WORKING]: " + message.replace("[MANGA : WORKING]: ", "");
                 } else if (message.includes("[MANGA : DONE]")) {
                     mangasDoneDiv.innerHTML += "<li>" + message.replace("[MANGA : DONE]: ", "") + "</li>";
                 } else if (message.includes("[CHAPTER : DONE]")) {
-                    chapterDoneDiv.textContent = "Chapter Done: " + message.replace("[CHAPTER : DONE]: ", "");
+                    chapterDoneDiv.textContent = "[CHAPTER:DONE]: " + message.replace("[CHAPTER : DONE]: ", "");
+                } else if (message.includes("[MANGA : ERROR]")) {
+                    mangasErrorDiv.innerHTML += += "<li>" + message.replace("[MANGA : ERROR]: ", "") + "</li>";
+                } else if (message.includes("STATUS")) {
+                    statusDiv.textContent = "Status: " + message.split(":")[1]
                 }
             });
         }, function(error) {
