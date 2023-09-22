@@ -1,0 +1,35 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>WebSocket Client</title>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
+    <script src="index.js" defer></script>
+</head>
+<body>
+    <div id="output"></div>
+</body>
+</html>
+<script>
+    document.addEventListener("DOMContentLoaded", function() {
+    const outputDiv = document.getElementById("output");
+
+    // Establish the WebSocket connection
+    const socket = new SockJS('http://localhost:8000/ws'); // Replace with your server's URL
+    const stompClient = Stomp.over(socket);
+
+    stompClient.connect({}, function(frame) {
+        console.log('Connected: ' + frame);
+
+        // Subscribe to progress updates from the server
+        stompClient.subscribe('/topic/progress', function(progressMessage) {
+            outputDiv.innerHTML += '<p>' + progressMessage.body + '</p>';
+        });
+    }, function(error) {
+        console.log('STOMP error ' + error);
+    });
+    
+});
+</script>

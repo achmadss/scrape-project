@@ -5,9 +5,10 @@ import com.microsoft.playwright.Browser
 import com.microsoft.playwright.Page
 import com.microsoft.playwright.options.WaitUntilState
 import kotlinx.coroutines.flow.Flow
+import org.springframework.messaging.simp.SimpMessagingTemplate
 
 abstract class ScrapeStrategy {
     val domContentLoaded: Page.NavigateOptions =
         Page.NavigateOptions().setWaitUntil(WaitUntilState.DOMCONTENTLOADED).setTimeout(60000.0)
-    abstract suspend fun scrape(browser: Browser): Flow<Manga?>
+    abstract suspend fun scrape(browser: Browser, simpMessagingTemplate: SimpMessagingTemplate): Flow<Manga?>
 }

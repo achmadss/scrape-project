@@ -12,10 +12,12 @@ import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
 import kotlinx.coroutines.isActive
 import kotlinx.coroutines.launch
+import org.springframework.messaging.simp.SimpMessagingTemplate
 
 class PlaywrightWorker(
     private val strategy: ScrapeStrategy,
     private val strategyName: String,
+    private val simpMessagingTemplate: SimpMessagingTemplate,
     private val mangaRepository: MangaRepository,
     private val onJobComplete: (String) -> Unit,
 ) {
@@ -24,14 +26,21 @@ class PlaywrightWorker(
     private val options = Playwright.CreateOptions()
     private val playwright: Playwright = Playwright.create(options)
     private val launchOptions = BrowserType.LaunchOptions().apply {
-        headless = true
+        headless = false
         args = listOf("--mute-audio")
     }
     private val browser: Browser = playwright.chromium().launch(launchOptions)
 
     fun start(scope: CoroutineScope) {
         job = scope.launch {
-            try { strategy.scrape(browser).collect { if (it != null) saveMangaToDatabase(it) }}
+            try { strategy.scrape(browser, simpMessagingTemplate).collect {
+                if (it != null) {
+                    saveMangaToDatabase(it)
+                    simpMessagingTemplate.convertAndSend(
+                        "/topic/progress", "[MANGA : DONE]: ${it.title}"
+                    )
+                }
+            }}
             catch (e: Exception) { e.printStackTrace() }
             finally { stop() }
         }

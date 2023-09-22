@@ -10,12 +10,17 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import org.springframework.messaging.simp.SimpMessagingTemplate
 
 class AsuraScansOneStrategy(
     private val link: String,
     private val mangaRepository: MangaRepository,
 ): ScrapeStrategy() {
-    override suspend fun scrape(browser: Browser): Flow<Manga?> = flow {
+    override suspend fun scrape(
+        browser: Browser,
+        simpMessagingTemplate: SimpMessagingTemplate,
+    ): Flow<Manga?> = flow {
+        simpMessagingTemplate.convertAndSend("/topic/progress","[MANGA : WORKING]: $link")
         val page = browser.newPage()
         try {
             page.navigate(link, domContentLoaded)
@@ -53,12 +58,14 @@ class AsuraScansOneStrategy(
             }
             if (chapters.isNotEmpty()) {
                 chapters.reversed()
-                chapters.map {
+                chapters.mapIndexed { index, it ->
                     page.navigate(it.chapterUrl, domContentLoaded)
                     val imageUrls = page.querySelectorAll("#readerarea p img").map {
                         it.getAttribute("src")
                     }
                     it.imageUrls.addAll(imageUrls)
+                    println(it)
+                    simpMessagingTemplate.convertAndSend("/topic/progress","[CHAPTER : DONE]: ${it.title}}")
                 }
                 var source = mutableListOf<String>()
                 if (id == null) source.add("AsuraScans")
@@ -72,6 +79,7 @@ class AsuraScansOneStrategy(
             }
         } catch (e: Exception) {
             e.printStackTrace()
+            simpMessagingTemplate.convertAndSend("/topic/progress","[MANGA : ERROR]: ${e.message}")
         } finally {
             page.close()
         }

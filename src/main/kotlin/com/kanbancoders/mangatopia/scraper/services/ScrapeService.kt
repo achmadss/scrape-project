@@ -13,12 +13,14 @@ import org.springframework.beans.factory.DisposableBean
 import org.springframework.beans.factory.annotation.Autowired
 import org.springframework.beans.factory.annotation.Value
 import org.springframework.http.HttpStatus
+import org.springframework.messaging.simp.SimpMessagingTemplate
 import org.springframework.scheduling.annotation.Async
 import org.springframework.stereotype.Service
 
 @Service
 class ScrapeService @Autowired constructor(
     private val mangaRepository: MangaRepository,
+    private val simpMessagingTemplate: SimpMessagingTemplate,
 ): DisposableBean {
 
     private val coroutineScope = CoroutineScope(Dispatchers.Default)
@@ -50,7 +52,9 @@ class ScrapeService @Autowired constructor(
 //            "FlameScans" -> FlameScansScrapeStrategy()
             else -> return
         }
-        val worker = PlaywrightWorker(strategy, strategyName, mangaRepository) { activeWorkers.remove(it) }
+        val worker = PlaywrightWorker(
+            strategy, strategyName, simpMessagingTemplate, mangaRepository
+        ) { activeWorkers.remove(it) }
         activeWorkers[strategyName] = worker
         worker.start(coroutineScope)
     }

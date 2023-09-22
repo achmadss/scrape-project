@@ -11,13 +11,17 @@ import java.time.LocalDateTime
 import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
+import org.springframework.messaging.simp.SimpMessagingTemplate
 
 class AsuraScansStrategy(
     private val baseUrl: String,
     private val mangaRepository: MangaRepository,
 ): ScrapeStrategy() {
 
-    override suspend fun scrape(browser: Browser): Flow<Manga?> = flow {
+    override suspend fun scrape(
+        browser: Browser,
+        simpMessagingTemplate: SimpMessagingTemplate,
+    ): Flow<Manga?> = flow {
         val page = browser.newPage()
         val lastUpdated = mangaRepository.findTopByOrderByUpdatedAtDesc()
             .map { it.title }
@@ -25,7 +29,8 @@ class AsuraScansStrategy(
         val links = accumulateLinksUntilLastUpdated(page, 1, lastUpdated).reversed()
         page.close()
         for (link in links) {
-            val manga = scrapeManga(browser, link)
+            simpMessagingTemplate.convertAndSend("/topic/progress","[MANGA : WORKING]: $link")
+            val manga = scrapeManga(browser, link, simpMessagingTemplate)
             emit(manga)
         }
     }
@@ -67,8 +72,14 @@ class AsuraScansStrategy(
         return nextPageExist != null && fetchTitlesAndLinks(page).map { it.second }.isNotEmpty()
     }
 
-    private fun scrapeManga(browser: Browser, link: String): Manga? {
-        val page = browser.newPage()
+    private fun scrapeManga(
+        browser: Browser,
+        link: String,
+        simpMessagingTemplate: SimpMessagingTemplate,
+    ): Manga? {
+        val context = browser.newContext()
+        context.clearCookies()
+        val page = context.newPage()
         return try {
             page.navigate(link, domContentLoaded)
             val elements = page.querySelectorAll(".thumbook img, .thumbook .imptdt i, .thumbook .imptdt a, .entry-title")
@@ -100,13 +111,14 @@ class AsuraScansStrategy(
                     chapterUrl = it.getAttribute("href")
                 )
             }.reversed().toMutableList()
-            chapters.map {
+            chapters.mapIndexed { index, it ->
                 page.navigate(it.chapterUrl, domContentLoaded)
                 val imageUrls = page.querySelectorAll("#readerarea p img").map {
                     it.getAttribute("src")
                 }
                 it.imageUrls.addAll(imageUrls)
                 println(it)
+                simpMessagingTemplate.convertAndSend("/topic/progress","[CHAPTER : DONE]: ${it.title}}")
             }
             var source = mutableListOf<String>()
             if (id == null) source.add("AsuraScans")
@@ -118,6 +130,7 @@ class AsuraScansStrategy(
             Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, source, chapters, link)
         } catch (e: Exception) {
             e.printStackTrace()
+            simpMessagingTemplate.convertAndSend("/topic/progress","[MANGA : ERROR]: ${e.message}")
             null
         } finally {
             page.close()
