@@ -90,6 +90,7 @@ class AsuraScansStrategy(
             val title = elements[3].innerText()
             val existingManga = mangaRepository.findByTitleIgnoreCase(title)
             var id: String? = null
+            val chapters = mutableListOf<Chapter>()
             val existingChaptersTitles = if (existingManga.isPresent) {
                 println("chapters exist: ${existingManga.get().chapters.map { it.title }}")
                 existingManga.get().chapters.map { it.title }.toSet()
@@ -101,7 +102,6 @@ class AsuraScansStrategy(
             val author = metadata[1].querySelector("span").innerText()
             val artist = metadata[2].querySelector("span").innerText()
             val chapterLinks = page.querySelectorAll("#chapterlist a")
-            var chapters = mutableListOf<Chapter>()
             chapterLinks.forEach {
                 val mangaTitle = it.querySelector(".chapternum").innerText()
                 if (existingChaptersTitles.contains(mangaTitle)) {
@@ -117,7 +117,6 @@ class AsuraScansStrategy(
                     chapterUrl = it.getAttribute("href")
                 ))
             }
-            chapters = chapters.reversed().toMutableList()
             chapters.map {
                 page.navigate(it.chapterUrl, domContentLoaded)
                 val imageUrls = page.querySelectorAll("#readerarea p img").map {
@@ -127,6 +126,7 @@ class AsuraScansStrategy(
                 println(it)
                 simpMessagingTemplate.convertAndSend("/topic/progress","[CHAPTER : DONE]: ${it.title}")
             }
+            if (existingManga.isPresent) chapters.addAll(existingManga.get().chapters)
             var source = mutableListOf<String>()
             if (id == null) source.add("AsuraScans")
             else {
@@ -134,7 +134,7 @@ class AsuraScansStrategy(
                 if (source.contains("AsuraScans").not()) source.add("AsuraScans")
             }
             page.close()
-            Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, source, chapters, link)
+            Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, source, chapters, link, updatedAt = LocalDateTime.now())
         } catch (e: Exception) {
             e.printStackTrace()
             simpMessagingTemplate.convertAndSend("/topic/progress","[MANGA : ERROR]: ${e.message}")
