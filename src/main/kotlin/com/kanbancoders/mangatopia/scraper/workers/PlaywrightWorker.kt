@@ -26,7 +26,7 @@ class PlaywrightWorker(
     private val options = Playwright.CreateOptions()
     private val playwright: Playwright = Playwright.create(options)
     private val launchOptions = BrowserType.LaunchOptions().apply {
-        headless = false
+        headless = true
         args = listOf("--mute-audio")
     }
     private val browser: Browser = playwright.chromium().launch(launchOptions)
