@@ -6,7 +6,9 @@ import com.kanbancoders.mangatopia.scraper.components.Manga
 import com.kanbancoders.mangatopia.scraper.components.MangaRepository
 import com.microsoft.playwright.Browser
 import com.microsoft.playwright.Page
+import java.time.LocalDate
 import java.time.LocalDateTime
+import java.time.format.DateTimeFormatter
 import kotlinx.coroutines.flow.Flow
 import kotlinx.coroutines.flow.flow
 
@@ -65,7 +67,6 @@ class AsuraScansStrategy(
         return nextPageExist != null && fetchTitlesAndLinks(page).map { it.second }.isNotEmpty()
     }
 
-
     private fun scrapeManga(browser: Browser, link: String): Manga? {
         val page = browser.newPage()
         return try {
@@ -91,9 +92,11 @@ class AsuraScansStrategy(
                 val mangaTitle = it.querySelector(".chapternum").innerText()
                 if (existingChaptersTitles.contains(mangaTitle)) return@mapNotNull null
                 val timestamp = it.querySelector(".chapterdate").innerText()
+                val formatter = DateTimeFormatter.ofPattern("MMMM d, yyyy")
+                val date = LocalDate.parse(timestamp, formatter)
                 Chapter(
                     title = mangaTitle,
-                    timestamp = LocalDateTime.parse(timestamp),
+                    timestamp = date.atStartOfDay(),
                     chapterUrl = it.getAttribute("href")
                 )
             }.reversed().toMutableList()
@@ -105,19 +108,20 @@ class AsuraScansStrategy(
                 it.imageUrls.addAll(imageUrls)
                 println(it)
             }
-            page.close()
             var source = mutableListOf<String>()
             if (id == null) source.add("AsuraScans")
             else {
                 source = existingManga.get().sources
                 if (source.contains("AsuraScans").not()) source.add("AsuraScans")
             }
+            page.close()
             Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, source, chapters, link)
         } catch (e: Exception) {
-            page.close()
+            e.printStackTrace()
             null
+        } finally {
+            page.close()
         }
     }
-
 
 }
