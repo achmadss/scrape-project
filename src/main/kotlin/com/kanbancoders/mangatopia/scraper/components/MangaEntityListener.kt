@@ -13,6 +13,7 @@ class MangaEntityListener {
 
     @PreUpdate
     fun onPreUpdate(manga: Manga) {
+        println("update manga: ${manga.title}")
         manga.updatedAt = LocalDateTime.now()
     }
 
