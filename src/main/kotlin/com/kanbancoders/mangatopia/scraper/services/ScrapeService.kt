@@ -5,6 +5,7 @@ import com.kanbancoders.mangatopia.scraper.common.error.GeneralException
 import com.kanbancoders.mangatopia.scraper.components.MangaRepository
 import com.kanbancoders.mangatopia.scraper.strategies.asurascans.AsuraScansOneStrategy
 import com.kanbancoders.mangatopia.scraper.strategies.asurascans.AsuraScansStrategy
+import com.kanbancoders.mangatopia.scraper.strategies.flamescans.FlameScansStrategy
 import com.kanbancoders.mangatopia.scraper.workers.PlaywrightWorker
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Dispatchers
@@ -29,6 +30,9 @@ class ScrapeService @Autowired constructor(
     @Value("\${asurascans.base.url}")
     lateinit var asurascansBaseUrl: String
 
+    @Value("\${flamescans.base.url}")
+    lateinit var flamescansBaseUrl: String
+
     override fun destroy() {
         coroutineScope.cancel()  // Cancel all child coroutines when the service is destroyed
     }
@@ -49,7 +53,7 @@ class ScrapeService @Autowired constructor(
                 if (link == null) throw GeneralException(HttpStatus.BAD_REQUEST, "link must not be null")
                 AsuraScansOneStrategy(link, mangaRepository)
             }
-//            "FlameScans" -> FlameScansScrapeStrategy()
+            "FlameScans" -> FlameScansStrategy(flamescansBaseUrl, mangaRepository)
             else -> return
         }
         val worker = PlaywrightWorker(

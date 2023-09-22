@@ -1,34 +1,48 @@
 <!DOCTYPE html>
 <html lang="en">
+
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>WebSocket Client</title>
+    <title>Scraping Progress</title>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/sockjs-client/1.5.2/sockjs.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/stomp.js/2.3.3/stomp.min.js"></script>
 </head>
+
 <body>
-    <div id="output"></div>
+<div id="mangaWorking">Manga Being Worked On: None</div>
+<div id="chapterDone">Chapter Done: None</div>
+<div id="mangasDone">Mangas Done:</div>
 </body>
+
 </html>
 <script>
     document.addEventListener("DOMContentLoaded", function() {
-    const outputDiv = document.getElementById("output");
+        const mangaWorkingDiv = document.getElementById("mangaWorking");
+        const chapterDoneDiv = document.getElementById("chapterDone");
+        const mangasDoneDiv = document.getElementById("mangasDone");
 
-    // Establish the WebSocket connection
-    const socket = new SockJS('https://scraper.kanbancoders.com/ws'); // Replace with your server's URL
-    const stompClient = Stomp.over(socket);
+        // Establish the WebSocket connection
+        const socket = new SockJS('https://scraper.kanbancoders.com/ws'); // Replace with your server's URL
+        const stompClient = Stomp.over(socket);
 
-    stompClient.connect({}, function(frame) {
-        console.log('Connected: ' + frame);
+        stompClient.connect({}, function(frame) {
+            console.log('Connected: ' + frame);
 
-        // Subscribe to progress updates from the server
-        stompClient.subscribe('/topic/progress', function(progressMessage) {
-            outputDiv.innerHTML += '<p>' + progressMessage.body + '</p>';
+            // Subscribe to progress updates from the server
+            stompClient.subscribe('/topic/progress', function(progressMessage) {
+                let message = progressMessage.body;
+
+                if (message.includes("[MANGA : WORKING]")) {
+                    mangaWorkingDiv.textContent = "Manga Being Worked On: " + message.replace("[MANGA : WORKING]: ", "");
+                } else if (message.includes("[MANGA : DONE]")) {
+                    mangasDoneDiv.innerHTML += "<li>" + message.replace("[MANGA : DONE]: ", "") + "</li>";
+                } else if (message.includes("[CHAPTER : DONE]")) {
+                    chapterDoneDiv.textContent = "Chapter Done: " + message.replace("[CHAPTER : DONE]: ", "");
+                }
+            });
+        }, function(error) {
+            console.log('STOMP error ' + error);
         });
-    }, function(error) {
-        console.log('STOMP error ' + error);
     });
-    
-});
 </script>
