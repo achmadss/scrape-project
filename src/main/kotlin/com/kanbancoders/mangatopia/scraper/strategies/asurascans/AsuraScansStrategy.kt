@@ -1,6 +1,7 @@
 package com.kanbancoders.mangatopia.scraper.strategies.asurascans
 
 import com.kanbancoders.mangatopia.scraper.common.ScrapeStrategy
+import com.kanbancoders.mangatopia.scraper.common.sortDescending
 import com.kanbancoders.mangatopia.scraper.components.Chapter
 import com.kanbancoders.mangatopia.scraper.components.Manga
 import com.kanbancoders.mangatopia.scraper.components.MangaRepository
@@ -90,7 +91,7 @@ class AsuraScansStrategy(
             val title = elements[3].innerText()
             val existingManga = mangaRepository.findByTitleIgnoreCase(title)
             var id: String? = null
-            val chapters = mutableListOf<Chapter>()
+            var chapters = mutableListOf<Chapter>()
             val existingChaptersTitles = if (existingManga.isPresent) {
                 println("chapters exist: ${existingManga.get().chapters.map { it.title }}")
                 existingManga.get().chapters.map { it.title }.toSet()
@@ -127,6 +128,7 @@ class AsuraScansStrategy(
                 simpMessagingTemplate.convertAndSend("/topic/progress","[CHAPTER : DONE]: ${it.title}")
             }
             if (existingManga.isPresent) chapters.addAll(existingManga.get().chapters)
+            chapters = chapters.sortDescending()
             var source = mutableListOf<String>()
             if (id == null) source.add("AsuraScans")
             else {
@@ -134,7 +136,7 @@ class AsuraScansStrategy(
                 if (source.contains("AsuraScans").not()) source.add("AsuraScans")
             }
             page.close()
-            Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, source, chapters, link, updatedAt = LocalDateTime.now())
+            Manga(id, title, bannerUrl, synopsis, status, type, author, artist, genres, source, chapters, link)
         } catch (e: Exception) {
             e.printStackTrace()
             simpMessagingTemplate.convertAndSend("/topic/progress","[MANGA : ERROR]: ${e.message}")

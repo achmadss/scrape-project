@@ -7,6 +7,7 @@ import com.microsoft.playwright.Browser
 import com.microsoft.playwright.BrowserType
 import com.microsoft.playwright.Playwright
 import com.microsoft.playwright.TimeoutError
+import java.time.LocalDateTime
 import kotlinx.coroutines.CoroutineScope
 import kotlinx.coroutines.Job
 import kotlinx.coroutines.delay
@@ -35,7 +36,7 @@ class PlaywrightWorker(
         job = scope.launch {
             try { strategy.scrape(browser, simpMessagingTemplate).collect {
                 if (it != null) {
-                    saveMangaToDatabase(it)
+                    saveMangaToDatabase(it.copy(updatedAt = LocalDateTime.now()))
                     simpMessagingTemplate.convertAndSend(
                         "/topic/progress", "[MANGA : DONE]: ${it.title}"
                     )
