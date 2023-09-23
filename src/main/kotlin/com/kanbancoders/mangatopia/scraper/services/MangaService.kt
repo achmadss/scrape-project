@@ -15,7 +15,7 @@ class MangaService @Autowired constructor(
 ) {
 
     fun getAll(): ResponseEntity<BaseResponse<List<Manga>>> {
-        return BaseResponse.ok(mangaRepository.findAllOrderByUpdatedAtDesc())
+        return BaseResponse.ok(mangaRepository.findAllByOrderByUpdatedAtDesc())
     }
 
     @Transactional
