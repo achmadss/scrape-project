@@ -118,7 +118,7 @@ class AsuraScansStrategy(
                     chapterUrl = it.getAttribute("href")
                 ))
             }
-            chapters.map {
+            chapters.reversed().map {
                 page.navigate(it.chapterUrl, domContentLoaded)
                 val imageUrls = page.querySelectorAll("#readerarea p img").map {
                     it.getAttribute("src")
