@@ -93,7 +93,6 @@ class AsuraScansStrategy(
             var id: String? = null
             var chapters = mutableListOf<Chapter>()
             val existingChaptersTitles = if (existingManga.isPresent) {
-                println("chapters exist: ${existingManga.get().chapters.map { it.title }}")
                 existingManga.get().chapters.map { it.title }.toSet()
             } else emptySet()
             if (existingManga.isPresent) id = existingManga.get().id
@@ -103,7 +102,7 @@ class AsuraScansStrategy(
             val author = metadata[1].querySelector("span").innerText()
             val artist = metadata[2].querySelector("span").innerText()
             val chapterLinks = page.querySelectorAll("#chapterlist a")
-            chapterLinks.forEach {
+            chapterLinks.reversed().forEach {
                 val mangaTitle = it.querySelector(".chapternum").innerText()
                 if (existingChaptersTitles.contains(mangaTitle)) {
                     println("$mangaTitle already exist")
@@ -118,7 +117,7 @@ class AsuraScansStrategy(
                     chapterUrl = it.getAttribute("href")
                 ))
             }
-            chapters.reversed().map {
+            chapters.map {
                 page.navigate(it.chapterUrl, domContentLoaded)
                 val imageUrls = page.querySelectorAll("#readerarea p img").map {
                     it.getAttribute("src")
