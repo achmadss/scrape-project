@@ -34,17 +34,18 @@ class PlaywrightWorker(
 
     fun start(scope: CoroutineScope) {
         job = scope.launch {
-            try { strategy.scrape(browser, simpMessagingTemplate).collect {
-                if (it != null) {
-                    saveMangaToDatabase(it.copy(updatedAt = LocalDateTime.now()))
-                    simpMessagingTemplate.convertAndSend(
-                        "/topic/progress", "[MANGA : DONE]: ${it.title}"
-                    )
+            try {
+                strategy.scrape(browser, simpMessagingTemplate).collect {
+                    if (it != null) {
+                        saveMangaToDatabase(it.copy(updatedAt = LocalDateTime.now()))
+                        simpMessagingTemplate.convertAndSend(
+                            "/topic/progress", "[MANGA : DONE]: ${it.title}"
+                        )
+                    }
                 }
-            }}
+            }
             catch (e: Exception) {
                 e.printStackTrace()
-                simpMessagingTemplate.convertAndSend("/topic/progress", "STATUS:ERROR")
             }
             finally { stop() }
         }
