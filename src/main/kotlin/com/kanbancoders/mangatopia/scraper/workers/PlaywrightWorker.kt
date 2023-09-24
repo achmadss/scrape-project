@@ -37,7 +37,7 @@ class PlaywrightWorker(
             try {
                 strategy.scrape(browser, simpMessagingTemplate).collect {
                     if (it != null) {
-                        saveMangaToDatabase(it.copy(updatedAt = LocalDateTime.now()))
+                        saveMangaToDatabase(it)
                         simpMessagingTemplate.convertAndSend(
                             "/topic/progress", "[MANGA : DONE]: ${it.title}"
                         )
@@ -75,7 +75,8 @@ class PlaywrightWorker(
                 author = manga.author,
                 artist = manga.artist,
                 genres = manga.genres,
-                chapters = manga.chapters
+                chapters = manga.chapters,
+                updatedAt = LocalDateTime.now()
             ))
         } else mangaRepository.save(manga)
     }
